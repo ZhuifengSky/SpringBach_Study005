@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:batch="http://www.springframework.org/schema/batch" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/batch
+        http://www.springframework.org/schema/batch/spring-batch.xsd
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+    ">
+
+	<import resource="context.xml" />
+	<import resource="database.xml" />
+
+	<bean id="user" class="com.main.User" scope="prototype" />
+	<bean id="messageProcessor" class="com.main.MessageProcessor" />
+	<bean id="messageItemWriter" class="com.main.MessageItemWriter" />
+
+
+	<batch:job id="callPay">
+		<batch:step id="noticePay">
+			<batch:tasklet>
+				<batch:chunk reader="messageReader" writer="messageItemWriter"
+					processor="messageProcessor" commit-interval="2">
+				</batch:chunk>
+			</batch:tasklet>
+		</batch:step>
+	</batch:job>
+
+	<bean id="messageReader" class="org.springframework.batch.item.file.FlatFileItemReader">
+
+		<!-- Read a txt file -->
+		<property name="resource" value="classpath:users.txt" />
+		<property name="lineMapper">
+			<bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+				<!--定义用什么分隔 -->
+				<!-- split it -->
+				<property name="lineTokenizer">
+					<!-- 默认按照逗号分隔 -->
+					<bean
+						class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+						<!-- <property name="names" value="date,impressions,clicks,earning" 
+							/> -->
+						<!--特殊的可以自己定义 下面是按照分好分隔 -->
+						<property name="delimiter" value=";" />
+					</bean>
+				</property>
+
+				<property name="fieldSetMapper">
+					<bean class="com.main.UserMapper" />
+
+					<!-- return back to reader, rather than a mapped object. -->
+					<!-- <bean class="org.springframework.batch.item.file.mapping.PassThroughFieldSetMapper" 
+						/> -->
+
+					<!-- map to an object -->
+					<!-- <bean class="org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper"> 
+						<property name="prototypeBeanName" value="report" /> </bean> -->
+
+				</property>
+			</bean>
+		</property>
+	</bean>
+
+</beans>
